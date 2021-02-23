@@ -1,12 +1,12 @@
-#ifndef grafo
-#define grafo
+#ifndef GRAFO
+#define GRAFO
 
-struct Grafo {
+typedef struct Grafo {
 
     int arestas;
     int vertices;
     int **adjacencia;
 
-} grafo;
+}Grafo;
 
-#endif
+#endif //GRAFO

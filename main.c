@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "utils.h"
 #include "transacao.h"
 #include "grafo.h"
 
@@ -15,6 +14,26 @@ int max_id(struct Operacao *operacoes, int num_operacoes) {
     return max;
 
 }
+
+struct Grafo build_grafo(int vertices) {
+
+    Grafo g;
+
+    g.arestas = 0;
+    g.vertices = vertices;
+    //g.adjacencia = (int **)malloc(vertices*vertices*sizeof(int))
+    g.adjacencia = (int **)malloc(vertices*sizeof(int *));
+
+    for(int i=0; i<vertices; i++)
+        g.adjacencia[i] = (int *)malloc(vertices*sizeof(int *));
+
+    for(int i=0; i < vertices; i++)
+        for(int j=0; j < vertices; j++)
+            g.adjacencia[i][j] = 0;
+    return g;
+}
+
+
 
 int *converte_indice_vetor(int *v, int tam_v, int num) {
 
@@ -58,11 +77,11 @@ struct ListaEscalonamentos encontra_escalonamento(struct Operacao *operacoes, in
         e.esc[j].num_operacoes = 0;
         e.esc[j].operacoes = (struct Operacao *)malloc(num_operacoes*sizeof(struct Operacao));
 
-        e.tam_lista_escalonamento += 1;        
+        e.tam_lista_escalonamento += 1;
 
         for(int k=0; k<tam_abertos; k++)
             v_aux[k] = 0;
-        
+
         do {
 
             e.esc[j].operacoes[e.esc[j].num_operacoes] = operacoes[i];
@@ -81,7 +100,7 @@ struct ListaEscalonamentos encontra_escalonamento(struct Operacao *operacoes, in
                 num_abertos--;
             }
             i++;
-    
+
         } while ((num_abertos != 0) && (i < num_operacoes));
 
         e.esc[j].id_transacoes = converte_indice_vetor(v_aux, tam_abertos, e.esc[j].num_transacoes);
@@ -90,7 +109,7 @@ struct ListaEscalonamentos encontra_escalonamento(struct Operacao *operacoes, in
 
         aux = 0;
         for (int k=0; k<=tam_abertos; k++)
-            aux += abertos[k];        
+            aux += abertos[k];
 
         if (aux != 0) {
             printf("PANIC!!!! Alguma transação não foi commitada\n");
@@ -102,11 +121,39 @@ struct ListaEscalonamentos encontra_escalonamento(struct Operacao *operacoes, in
 
 }
 
-int teste_seriabilidade(struct Escalonamento *e) {
+void imprime_grafo(struct Grafo *g){
+    for(int i = 0;i < g->vertices; i++){
+        for(int j = 0; j < g->vertices; j++){
+            printf("%d ", g->adjacencia[i][j]);
+        }
+        printf("\n");
+    }
+}
 
-    //struct Grafo g = build_graph(e->num_transacoes);
+int teste_seriabilidade(struct Escalonamento *e, struct Grafo *g) {
 
-    
+    // operações auxiliares i e j
+    struct Operacao op_i, op_j;
+
+    // Cria as arestas no grafo
+    for(int i = 0; i < e->num_operacoes - 1; i++){
+        op_i = e->operacoes[i];
+        for(int j = i + 1; j < e->num_operacoes; j++){
+            op_j = e->operacoes[j];
+
+            // caso no qual transações diferentes acessam o mesmo atributo
+            if((op_j.id != op_i.id) && (op_j.atributo == op_i.atributo)){
+
+                // caso no qual existe um Write antes de um Read
+                // Read antes de um Write
+                // e Write antes de um Write.
+                if(op_j.op != 'R' && op_i.op != 'R')
+                    g->adjacencia[op_i.id - 1][op_j.id - 1] = 1;
+            }
+        }
+    }
+
+    imprime_grafo(g);
 
 }
 
@@ -117,9 +164,9 @@ void main() {
     struct ListaEscalonamentos e;
 
     while (
-        scanf("%d %d %c %c", 
-            &pos, 
-            &operacao_aux.id, 
+        scanf("%d %d %c %c",
+            &pos,
+            &operacao_aux.id,
             &operacao_aux.op,
             &operacao_aux.atributo
         ) != EOF)
@@ -133,9 +180,8 @@ void main() {
       for (int i=0; i<num_operacoes; i++) {
           printf("%d %d %c %c\n", i+1, operacoes[i].id, operacoes[i].op, operacoes[i].atributo);
       }
-
     e = encontra_escalonamento(operacoes, num_operacoes);
-
+/*
 //começo de debbuger
     printf("estrutura de dados:\n");
     printf("ListaEscalonamentos(tamanho = %d):\n", e.tam_lista_escalonamento);
@@ -151,13 +197,22 @@ void main() {
 
     }
 //fim do debugger
-
+*/
 //printa saida (WIP)
+
+    // monta o grafo global para testar seriabilidade
+    int n_transacoes_global = 0;
+    for (int i=0; i < e.tam_lista_escalonamento; i++)
+        n_transacoes_global += e.esc[i].num_transacoes;
+    Grafo g = build_grafo(n_transacoes_global);
+
+
     for (int i=0; i < e.tam_lista_escalonamento; i++) {
-//        teste_seriabilidade(&e.esc[i]);
+        teste_seriabilidade(&e.esc[i], &g);
+
         for (int j=0; j < e.esc[i].num_transacoes; j++)
             printf("%d,", e.esc[i].id_transacoes[j]);
-        //if 
+        //if
         printf("\n");
     }
 }
