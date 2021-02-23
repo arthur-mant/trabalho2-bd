@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "utils.h"
 #include "transacao.h"
+#include "grafo.h"
 
 int max_id(struct Transacao *transacoes, int num_transacoes) {
 
@@ -15,31 +16,49 @@ int max_id(struct Transacao *transacoes, int num_transacoes) {
 
 }
 
+int *converte_indice_vetor(int *v, int tam_v, int num) {
+
+    int *u, j;
+
+    u = (int *)malloc(num*(sizeof(int)));
+
+    j=0;
+    for (int i=1; i<=tam_v; i++) {
+        if (v[i] == 1) {
+            u[j] = i;
+            j++;
+        }
+    }
+    return u;
+}
+
 struct ListaEscalonamentos encontra_escalonamento(struct Transacao *transacoes, int num_transacoes) {
 
-    int num_abertos, *abertos, tam_abertos, i, aux, j;
+    int num_abertos, *abertos, tam_abertos, i, aux, j, *v_aux;
 
     struct ListaEscalonamentos e;
 
-    tam_abertos = max_id(transacoes, num_transacoes);
-    abertos = (int *)malloc((tam_abertos+1)*sizeof(int));
+    tam_abertos = max_id(transacoes, num_transacoes)+1;
+    abertos = (int *)malloc(tam_abertos*sizeof(int));
 
     for (int i=0; i<=tam_abertos; i++)
         abertos[i] = 0;
 
     e.esc = (struct Escalonamento *)malloc(num_transacoes*sizeof(struct Escalonamento));
     e.tam_lista_escalonamento = 0;
-    e.tam_id_transacoes = tam_abertos;
 
     num_abertos = 0;
     i = 0;
     j = 0;
+    v_aux = (int *)malloc(tam_abertos*sizeof(int));
+
     while (i < num_transacoes) {
 
-        e.esc[j].id_transacoes = (int *)malloc(e.tam_id_transacoes*sizeof(int));
         e.tam_lista_escalonamento += 1;
-        for(int k=0; k<e.tam_id_transacoes; k++)
-            e.esc[j].id_transacoes[k] = 0;
+        e.esc[j].num_transacoes = 0;
+
+        for(int k=0; k<tam_abertos; k++)
+            v_aux[k] = 0;
         
         do {
 
@@ -47,7 +66,8 @@ struct ListaEscalonamentos encontra_escalonamento(struct Transacao *transacoes, 
             if ((abertos[transacoes[i].id] != 1) && (transacoes[i].operacao != 'C')) {
                 abertos[transacoes[i].id] = 1;
                 num_abertos++;
-                e.esc[j].id_transacoes[transacoes[i].id] = 1;
+                v_aux[transacoes[i].id] = 1;
+                e.esc[j].num_transacoes++;
             }
             //fecha transacao do id tal
             if ((abertos[transacoes[i].id] == 1) && (transacoes[i].operacao == 'C')) {
@@ -58,6 +78,8 @@ struct ListaEscalonamentos encontra_escalonamento(struct Transacao *transacoes, 
     
         } while ((num_abertos != 0) && (i < num_transacoes));
 
+        e.esc[j].id_transacoes = converte_indice_vetor(v_aux, tam_abertos, e.esc[j].num_transacoes);
+
         j++;
 
         aux = 0;
@@ -67,14 +89,18 @@ struct ListaEscalonamentos encontra_escalonamento(struct Transacao *transacoes, 
         if (aux != 0) {
             printf("PANIC!!!! Alguma transação não foi commitada");
         }
+
     }
 
     return e;
 
 }
 
-void teste_seriabilidade(struct Transacao transacoes, int num_transacoes) {
-    
+void teste_seriabilidade(struct Escalonamento *e) {
+
+//    struct Grafo g = build_graph(e->num_transacoes);
+
+
 }
 
 void main() {
@@ -104,9 +130,9 @@ void main() {
     e = encontra_escalonamento(transacoes, num_transacoes);
 
     for (int i=0; i < e.tam_lista_escalonamento; i++) {
-        for (int j=1; j <= e.tam_id_transacoes; j++)
-            if (e.esc[i].id_transacoes[j] == 1)
-                printf("%d,", j);
+//        teste_seriabilidade(&e.esc[i]);
+        for (int j=0; j < e.esc[i].num_transacoes; j++)
+            printf("%d,", e.esc[i].id_transacoes[j]);
         //if 
         printf("\n");
     }
