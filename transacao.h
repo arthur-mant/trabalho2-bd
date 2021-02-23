@@ -1,20 +1,20 @@
 #ifndef transacao
 #define transacao
 
-struct Transacao {
+struct Operacao {
 
     int id;
-    char operacao;
+    char op;
     char atributo;
 
-} transacao;
+} operacao;
 
 struct Escalonamento {
 
     int *id_transacoes;
     int num_transacoes;
-    char serial;
-    char visao;
+    struct Operacao *operacoes;
+    int num_operacoes;
 
 } escalonamento;
 

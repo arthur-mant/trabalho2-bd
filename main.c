@@ -4,13 +4,13 @@
 #include "transacao.h"
 #include "grafo.h"
 
-int max_id(struct Transacao *transacoes, int num_transacoes) {
+int max_id(struct Operacao *operacoes, int num_operacoes) {
 
     int max = 0;
 
-    for (int i=0; i<num_transacoes; i++)
-        if (max < transacoes[i].id)
-            max = transacoes[i].id;
+    for (int i=0; i<num_operacoes; i++)
+        if (max < operacoes[i].id)
+            max = operacoes[i].id;
 
     return max;
 
@@ -32,19 +32,19 @@ int *converte_indice_vetor(int *v, int tam_v, int num) {
     return u;
 }
 
-struct ListaEscalonamentos encontra_escalonamento(struct Transacao *transacoes, int num_transacoes) {
+struct ListaEscalonamentos encontra_escalonamento(struct Operacao *operacoes, int num_operacoes) {
 
     int num_abertos, *abertos, tam_abertos, i, aux, j, *v_aux;
 
     struct ListaEscalonamentos e;
 
-    tam_abertos = max_id(transacoes, num_transacoes)+1;
+    tam_abertos = max_id(operacoes, num_operacoes)+1;
     abertos = (int *)malloc(tam_abertos*sizeof(int));
 
-    for (int i=0; i<=tam_abertos; i++)
+    for (int i=0; i<tam_abertos; i++)
         abertos[i] = 0;
 
-    e.esc = (struct Escalonamento *)malloc(num_transacoes*sizeof(struct Escalonamento));
+    e.esc = (struct Escalonamento *)malloc(num_operacoes*sizeof(struct Escalonamento));
     e.tam_lista_escalonamento = 0;
 
     num_abertos = 0;
@@ -52,31 +52,37 @@ struct ListaEscalonamentos encontra_escalonamento(struct Transacao *transacoes, 
     j = 0;
     v_aux = (int *)malloc(tam_abertos*sizeof(int));
 
-    while (i < num_transacoes) {
+    while (i < num_operacoes) {
 
-        e.tam_lista_escalonamento += 1;
         e.esc[j].num_transacoes = 0;
+        e.esc[j].num_operacoes = 0;
+        e.esc[j].operacoes = (struct Operacao *)malloc(num_operacoes*sizeof(struct Operacao));
+
+        e.tam_lista_escalonamento += 1;        
 
         for(int k=0; k<tam_abertos; k++)
             v_aux[k] = 0;
         
         do {
 
+            e.esc[j].operacoes[e.esc[j].num_operacoes] = operacoes[i];
+            e.esc[j].num_operacoes++;
+
             //abre transacao do id tal
-            if ((abertos[transacoes[i].id] != 1) && (transacoes[i].operacao != 'C')) {
-                abertos[transacoes[i].id] = 1;
+            if ((abertos[operacoes[i].id] != 1) && (operacoes[i].op != 'C')) {
+                abertos[operacoes[i].id] = 1;
                 num_abertos++;
-                v_aux[transacoes[i].id] = 1;
+                v_aux[operacoes[i].id] = 1;
                 e.esc[j].num_transacoes++;
             }
             //fecha transacao do id tal
-            if ((abertos[transacoes[i].id] == 1) && (transacoes[i].operacao == 'C')) {
-                abertos[transacoes[i].id] = 0;
+            if ((abertos[operacoes[i].id] == 1) && (operacoes[i].op == 'C')) {
+                abertos[operacoes[i].id] = 0;
                 num_abertos--;
             }
             i++;
     
-        } while ((num_abertos != 0) && (i < num_transacoes));
+        } while ((num_abertos != 0) && (i < num_operacoes));
 
         e.esc[j].id_transacoes = converte_indice_vetor(v_aux, tam_abertos, e.esc[j].num_transacoes);
 
@@ -87,7 +93,7 @@ struct ListaEscalonamentos encontra_escalonamento(struct Transacao *transacoes, 
             aux += abertos[k];        
 
         if (aux != 0) {
-            printf("PANIC!!!! Alguma transação não foi commitada");
+            printf("PANIC!!!! Alguma transação não foi commitada\n");
         }
 
     }
@@ -96,39 +102,57 @@ struct ListaEscalonamentos encontra_escalonamento(struct Transacao *transacoes, 
 
 }
 
-void teste_seriabilidade(struct Escalonamento *e) {
+int teste_seriabilidade(struct Escalonamento *e) {
 
-//    struct Grafo g = build_graph(e->num_transacoes);
+    //struct Grafo g = build_graph(e->num_transacoes);
 
+    
 
 }
 
 void main() {
 
-    int pos, num_transacoes;
-    struct Transacao transacoes[1000], transacao_aux;
+    int pos, num_operacoes;
+    struct Operacao operacoes[1000], operacao_aux;
     struct ListaEscalonamentos e;
 
     while (
         scanf("%d %d %c %c", 
             &pos, 
-            &transacao_aux.id, 
-            &transacao_aux.operacao,
-            &transacao_aux.atributo
+            &operacao_aux.id, 
+            &operacao_aux.op,
+            &operacao_aux.atributo
         ) != EOF)
     {
-        transacoes[pos-1] = transacao_aux;
+        operacoes[pos-1] = operacao_aux;
     }
 
-    num_transacoes = pos;
+    num_operacoes = pos;
 
     printf("entrada\n");
-      for (int i=0; i<num_transacoes; i++) {
-          printf("%d %d %c %c\n", i+1, transacoes[i].id, transacoes[i].operacao, transacoes[i].atributo);
+      for (int i=0; i<num_operacoes; i++) {
+          printf("%d %d %c %c\n", i+1, operacoes[i].id, operacoes[i].op, operacoes[i].atributo);
       }
 
-    e = encontra_escalonamento(transacoes, num_transacoes);
+    e = encontra_escalonamento(operacoes, num_operacoes);
 
+//começo de debbuger
+    printf("estrutura de dados:\n");
+    printf("ListaEscalonamentos(tamanho = %d):\n", e.tam_lista_escalonamento);
+
+    for (int i=0; i<e.tam_lista_escalonamento; i++) {
+        printf("Escalonamento %d possui %d transacoes: ", i+1, e.esc[i].num_transacoes);
+        for (int j=0; j<e.esc[i].num_transacoes; j++)
+            printf("%d, ", e.esc[i].id_transacoes[j]);
+
+        printf("Com %d operacoes:\n", e.esc[i].num_operacoes);
+        for (int j=0; j<e.esc[i].num_operacoes; j++)
+            printf("%d %d %c %c\n", i+1, e.esc[i].operacoes[j].id, e.esc[i].operacoes[j].op, e.esc[i].operacoes[j].atributo);
+
+    }
+//fim do debugger
+
+//printa saida (WIP)
     for (int i=0; i < e.tam_lista_escalonamento; i++) {
 //        teste_seriabilidade(&e.esc[i]);
         for (int j=0; j < e.esc[i].num_transacoes; j++)
