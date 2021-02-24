@@ -21,7 +21,6 @@ struct Grafo build_grafo(int vertices) {
 
     g.arestas = 0;
     g.vertices = vertices;
-    //g.adjacencia = (int **)malloc(vertices*vertices*sizeof(int))
     g.adjacencia = (int **)malloc(vertices*sizeof(int *));
 
     for(int i=0; i<vertices; i++)
@@ -32,8 +31,6 @@ struct Grafo build_grafo(int vertices) {
             g.adjacencia[i][j] = 0;
     return g;
 }
-
-
 
 int *converte_indice_vetor(int *v, int tam_v, int num) {
 
@@ -138,22 +135,58 @@ int teste_seriabilidade(struct Escalonamento *e, struct Grafo *g) {
     // Cria as arestas no grafo
     for(int i = 0; i < e->num_operacoes - 1; i++){
         op_i = e->operacoes[i];
-        for(int j = i + 1; j < e->num_operacoes; j++){
+        for(int j = 0; j < e->num_operacoes; j++){
             op_j = e->operacoes[j];
 
             // caso no qual transações diferentes acessam o mesmo atributo
-            if((op_j.id != op_i.id) && (op_j.atributo == op_i.atributo)){
+            int transacao_conflito = (op_j.id != op_i.id) && (op_j.atributo == op_i.atributo) && (op_j.op != 'C' && op_i.op != 'C')
+            if(transacao_conflito){
 
                 // caso no qual existe um Write antes de um Read
                 // Read antes de um Write
                 // e Write antes de um Write.
-                if(op_j.op != 'R' && op_i.op != 'R')
+                int cria_aresta = (op_j.op != op_i.op) || (op_j.op == 'W' && op_i.op == 'W');
+
+                // cria uma aresta entre i e j na matriz adjacente
+                if(cria_aresta){
                     g->adjacencia[op_i.id - 1][op_j.id - 1] = 1;
+                }
             }
         }
     }
 
+
     imprime_grafo(g);
+
+}
+
+void heapPermutation(int *a, int size, int n){
+    int aux;
+    // if size becomes 1 then prints the obtained
+    // permutation
+    if (size == 1)
+        return a;
+
+    for (int i = 0; i < size; i++) {
+        heapPermutation(a, size - 1, n);
+
+        if (size % 2 == 1){
+            aux = a[0];
+            a[0] = a[size - 1];
+            a[size - 1] = aux;
+
+        }
+
+        else{
+            aux = a[i];
+            a[i] = a[size - 1];
+            a[size - 1] = aux;
+
+        }
+    }
+}
+
+int teste_equivalencia_visao(struct Escalonamento *e){
 
 }
 
