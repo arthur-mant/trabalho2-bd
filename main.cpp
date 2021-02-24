@@ -1,37 +1,8 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <algorithm>
 #include "utils.h"
 #include "transacao.h"
 #include "grafo.h"
-
-int max_id(std::vector<struct Operacao> operacoes) {
-
-    int max = 0;
-
-    for (struct Operacao x: operacoes)
-        if (max < x.id)
-            max = x.id;
-
-    return max;
-
-}
-
-int *converte_indice_vetor(int *v, int tam_v, int num) {
-
-    int *u, j;
-
-    u = (int *)malloc(num*(sizeof(int)));
-
-    j=0;
-    for (int i=1; i<=tam_v; i++) {
-        if (v[i] == 1) {
-            u[j] = i;
-            j++;
-        }
-    }
-    return u;
-}
 
 std::vector<struct Escalonamento> encontra_escalonamento(std::vector<struct Operacao> operacoes) {
 
@@ -41,12 +12,6 @@ std::vector<struct Escalonamento> encontra_escalonamento(std::vector<struct Oper
     std::vector<struct Escalonamento> escalonamentos;
 
     abertos.resize(max_id(operacoes)+1);
-/*
-    abertos = (int *)malloc(tam_abertos*sizeof(int));
-
-    for (int i=0; i<tam_abertos; i++)
-        abertos[i] = 0;
-*/
 
     i = 0;
 

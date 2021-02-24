@@ -10,13 +10,13 @@ struct Operacao {
     char op;
     char atributo;
 
-} operacao;
+};
 
 struct Escalonamento {
 
     std::vector<int> id_transacoes;
     std::vector<struct Operacao> operacoes;
 
-} escalonamento;
+};
 
 #endif
