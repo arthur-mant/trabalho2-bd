@@ -1,8 +1,11 @@
 #ifndef transacao
 #define transacao
 
+#include <vector>
+
 struct Operacao {
 
+    int pos;
     int id;
     char op;
     char atributo;
@@ -11,18 +14,9 @@ struct Operacao {
 
 struct Escalonamento {
 
-    int *id_transacoes;
-    int num_transacoes;
-    struct Operacao *operacoes;
-    int num_operacoes;
+    std::vector<int> id_transacoes;
+    std::vector<struct Operacao> operacoes;
 
 } escalonamento;
-
-struct ListaEscalonamentos {
-
-    struct Escalonamento *esc;
-    int tam_lista_escalonamento;
-
-} lista_escalonamento;
 
 #endif
