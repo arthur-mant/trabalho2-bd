@@ -235,12 +235,12 @@ int main() {
     {
         operacoes.push_back(operacao_aux);
     }
-
+/*
     printf("entrada\n");
     for (struct Operacao x: operacoes) {
           printf("%d %d %c %c\n", x.pos, x.id, x.op, x.atributo);
     }
-
+*/
     escalonamentos = encontra_escalonamento(operacoes);
 
 /*
@@ -268,16 +268,27 @@ int main() {
     }
     Grafo *g = new Grafo(tamanho_problema);
 
-//printa saida (WIP)
-
-    for (struct Escalonamento esc: escalonamentos) {
+    for (int k=0; k < escalonamentos.size(); k++) {
 //        teste_seriabilidade(&e.esc[i]);
         //cout << teste_seriabilidade(&esc, g);
         //int i = teste_seriabilidade(&esc, g);
-        teste_equivalencia_visao(&esc);
-        //for (int t: esc.id_transacoes)
-            //printf("%d,", t);
-        //if
+        teste_equivalencia_visao(&escalonamentos[k]);
+        printf("%d %d", k+1, escalonamentos[k].id_transacoes[0]);
+        for (int i=1; i<escalonamentos[k].id_transacoes.size(); i++)
+            printf(",%d", escalonamentos[k].id_transacoes[i]);
+
+        if (teste_seriabilidade(&escalonamentos[k], g))
+            printf(" SS");
+        else
+            printf(" NS");
+
+        if (teste_equivalencia_visao(&escalonamentos[k]))
+            printf(" SV");
+        else
+            printf(" NV");
+
         printf("\n");
+
+        printf("%d %d\n", teste_equivalencia_visao(&escalonamentos[k]), teste_seriabilidade(&escalonamentos[k], g));
     }
 }
