@@ -39,3 +39,13 @@ int detectaCiclo(Grafo *G) {
   }
   return 0;
 }
+
+void reinicia_grafo(Grafo *g){
+  for(int i = 0; i < g->n_vertices; i++){
+    for(int j = 0; j < g->n_vertices; j++){
+      if(i == j) g->m_adjacencia[i][j] = 1;
+      else g->m_adjacencia[i][j] = 0;
+    }
+
+  }
+}

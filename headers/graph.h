@@ -8,12 +8,18 @@ typedef struct Grafo{
     for(int i = 0; i < n; i++)
       m_adjacencia[i] = new int[n];
 
-    for(int i = 0; i < n; i++)
-      for(int j = 0; j < n; j++)
-        m_adjacencia[i][j] = 0;
+    for(int i = 0; i < n; i++){
+      for(int j = 0; j < n; j++){
+        if(i == j) m_adjacencia[i][j] = 1;
+        else m_adjacencia[i][j] = 0;
+      }
+
+    }
+
   }
 
 }Grafo;
 
 int detectaCiclo_util(Grafo *G, int* visitados, int atual);
 int detectaCiclo(Grafo *G);
+void reinicia_grafo(Grafo *g);

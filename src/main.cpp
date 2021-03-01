@@ -62,6 +62,15 @@ std::vector<struct Escalonamento> encontra_escalonamento(std::vector<struct Oper
 
 }
 
+void print_grafo(Grafo *g){
+    for(int i = 0; i < g->n_vertices; i++){
+        for(int j = 0; j < g->n_vertices; j++){
+            cout << g->m_adjacencia[i][j] << " ";
+        }
+        cout << "\n";
+    }
+}
+
 int teste_seriabilidade(struct Escalonamento *e, Grafo *g) {
 
     // operações auxiliares i e j
@@ -88,7 +97,8 @@ int teste_seriabilidade(struct Escalonamento *e, Grafo *g) {
         }
     }
     // verifica se o grafo é cíclico.
-    return detectaCiclo(g);
+
+    return !detectaCiclo(g);
 }
 
 int fatorial(int n){
@@ -114,7 +124,8 @@ bool verifica_visao(std::vector<struct Operacao> v1, std::vector<struct Operacao
     vector<struct Operacao> ultimas_escritas;
 
     struct Operacao op2_i, op2_j;
-
+    struct Operacao opi, opj, opk;
+    struct Operacao ultima_escrita, ultima_escrita_v2;
     bool found = true, escrita_anterior;
 
     // operações em ordem inversa
@@ -124,41 +135,34 @@ bool verifica_visao(std::vector<struct Operacao> v1, std::vector<struct Operacao
     reverse(inverse_v2.begin(), inverse_v2.end());
 
     // para cada operação na primeira visão
-    for(struct Operacao op_i: v1){
 
-        // caso a operação seja de READ
-        if(op_i.op == 'R'){
+    for(int i = v1.size() - 1; i >= 0; i--){
+        opi = v1[i];
+        if(opi.op == 'R'){
+            ultima_escrita = opi;
+            for(int j = i - 1; j >= 0; j--){
+                opj = v1[j];
 
-            // procuramos uma operação de WRITE que venha antes dela de uma transação diferente
-            for(struct Operacao op_j: v1){
-                escrita_anterior = (op_i.id != op_j.id);
-                escrita_anterior &= (op_i.atributo == op_j.atributo) && (op_j.op == 'W');
-                escrita_anterior &= (op_j.pos < op_i.pos);
+                escrita_anterior = opj.id != opi.id && opj.atributo == opi.atributo && opj.op == 'W';
+                if(escrita_anterior) ultima_escrita = opj;
+            }
 
-                // existe uma operação de WRITE antes de READ no atributo
-                if(escrita_anterior){
-                    found = false;
+            for(int k = v2.size() - 1; k >= 0; k--){
+                opk = v2[k];
+                if(compara_operacao(opi, opk)){
+                    ultima_escrita_v2 = opk;
+                    for(int j = k - 1; j >= 0; j--){
+                        opj = v2[j];
+                        escrita_anterior = opj.id != opk.id && opk.atributo == opj.atributo && opj.op == 'W';
 
-                    // found retorna true se o WRITE serial vem antes do READ
-                    for(int i = v2.size(); i >= 0; i--){
-                        op2_i = v2[i];
-                        if(compara_operacao(op_i, op2_i)){
-                            for(int j = i - 1; j >= 0; j--){
-                                op2_j = v2[j];
-                                if(compara_operacao(op2_j, op_j)) found = true;
-                            }
-                            break;
-                        }
+                        if(escrita_anterior) ultima_escrita_v2 = opj;
                     }
                 }
-
-                // caso não tenhamos achado o WRITE antes do READ
-                // primeira regra é violada, retornamos false.
-                if(!found) return false;
             }
+
+            if(!compara_operacao(ultima_escrita, ultima_escrita_v2)) return false;
         }
     }
-
     // guarda os atributos já vistos
     vector<char> visitados;
 
@@ -201,8 +205,6 @@ bool teste_equivalencia_visao(struct Escalonamento *e){
     vector<struct Operacao> operacoes_seriais;
     // computa todas as permutações
     for(int i = 1; i <= fatorial(n_transacoes); i++){
-        next_permutation(permutacao.begin(), permutacao.end());
-
         // adiciona as operações em série
         for(int id_transacao: permutacao){
             for(struct Operacao op: e->operacoes){
@@ -214,6 +216,7 @@ bool teste_equivalencia_visao(struct Escalonamento *e){
 
         if(verifica_visao(e->operacoes, operacoes_seriais)) return true;
 
+        next_permutation(permutacao.begin(), permutacao.end());
         operacoes_seriais.clear();
     }
     return false;
@@ -243,8 +246,9 @@ int main() {
 */
     escalonamentos = encontra_escalonamento(operacoes);
 
-/*
+
 //começo de debbuger
+printf("------------------------------------------------------------\n");
     printf("estrutura de dados:\n");
     printf("ListaEscalonamentos(tamanho = %d):\n", (int)escalonamentos.size());
 
@@ -258,8 +262,9 @@ int main() {
             printf("%d %d %c %c\n", o.pos, o.id, o.op, o.atributo);
 
     }
+printf("------------------------------------------------------------\n");
 //fim do debugger
-*/
+
 
     // monta o grafo global
     int tamanho_problema = 0;
@@ -273,6 +278,8 @@ int main() {
         //cout << teste_seriabilidade(&esc, g);
         //int i = teste_seriabilidade(&esc, g);
         teste_equivalencia_visao(&escalonamentos[k]);
+        //teste_seriabilidade(&escalonamentos[k], g);
+
         printf("%d %d", k+1, escalonamentos[k].id_transacoes[0]);
         for (int i=1; i<escalonamentos[k].id_transacoes.size(); i++)
             printf(",%d", escalonamentos[k].id_transacoes[i]);
@@ -290,5 +297,9 @@ int main() {
         printf("\n");
 
         printf("%d %d\n", teste_equivalencia_visao(&escalonamentos[k]), teste_seriabilidade(&escalonamentos[k], g));
+        cout << "\n";
+        print_grafo(g);
+        cout << "\n";
+        reinicia_grafo(g);
     }
 }
