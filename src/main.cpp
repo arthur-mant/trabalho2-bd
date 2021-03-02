@@ -24,16 +24,18 @@ std::vector<struct Escalonamento> encontra_escalonamento(std::vector<struct Oper
         e_aux = {};
 
         do {
-
+            //adiciona operação no escalonamento
             e_aux.operacoes.push_back(operacoes[i]);
 
-            //abre transacao do id tal
+            //abre transação do id tal
             if ((abertos[operacoes[i].id] != 1) && (operacoes[i].op != 'C')) {
                 abertos[operacoes[i].id] = 1;
                 num_abertos++;
+                
+                //adiciona transação no escalonamento
                 e_aux.id_transacoes.push_back(operacoes[i].id);
             }
-            //fecha transacao do id tal
+            //fecha transação do id tal
             if ((abertos[operacoes[i].id] == 1) && (operacoes[i].op == 'C')) {
                 abertos[operacoes[i].id] = 0;
                 num_abertos--;
@@ -42,12 +44,16 @@ std::vector<struct Escalonamento> encontra_escalonamento(std::vector<struct Oper
 
         } while ((num_abertos != 0) && (i < operacoes.size()));
 
+        //remove possíveis duplicatas e ordena o vetor de transações
         std::sort(e_aux.id_transacoes.begin(), e_aux.id_transacoes.end());
         e_aux.id_transacoes.erase(std::unique(
             e_aux.id_transacoes.begin(), e_aux.id_transacoes.end()
         ), e_aux.id_transacoes.end());
+
+        //adiciona o escalonamento na lista a ser retornada
         escalonamentos.push_back(e_aux);
 
+        //verifica se não houve algum erro, como uma transação não commitada
         aux = 0;
         for (int x: abertos)
             aux += x;
@@ -241,6 +247,7 @@ int main() {
     std::vector<struct Operacao> operacoes;
     std::vector<struct Escalonamento> escalonamentos;
 
+    //leitura da entrada
     while (
         scanf("%d %d %c %c",
             &operacao_aux.pos,
@@ -251,35 +258,11 @@ int main() {
     {
         operacoes.push_back(operacao_aux);
     }
-/*
-    printf("entrada\n");
-    for (struct Operacao x: operacoes) {
-          printf("%d %d %c %c\n", x.pos, x.id, x.op, x.atributo);
-    }
-*/
+
     escalonamentos = encontra_escalonamento(operacoes);
 
 
-//começo de debbuger
-/*
-printf("------------------------------------------------------------\n");
-    printf("estrutura de dados:\n");
-    printf("ListaEscalonamentos(tamanho = %d):\n", (int)escalonamentos.size());
-
-    for (struct Escalonamento esc: escalonamentos) {
-        printf("O seguinte escalonamento possui %d transacoes: ", (int)esc.id_transacoes.size());
-        for (int x: esc.id_transacoes)
-            printf("%d, ", x);
-
-        printf("Com %d operacoes:\n", (int)esc.operacoes.size());
-        for (struct Operacao o: esc.operacoes)
-            printf("%d %d %c %c\n", o.pos, o.id, o.op, o.atributo);
-
-    }
-printf("------------------------------------------------------------\n");
-//fim do debugger
-*/
-
+    //saída
     for (int k=0; k < escalonamentos.size(); k++) {
 
         printf("%d %d", k+1, escalonamentos[k].id_transacoes[0]);
