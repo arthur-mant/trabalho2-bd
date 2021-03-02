@@ -1,3 +1,7 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+
 typedef struct Grafo{
   int **m_adjacencia;
   int n_vertices;
@@ -10,16 +14,13 @@ typedef struct Grafo{
 
     for(int i = 0; i < n; i++){
       for(int j = 0; j < n; j++){
-        if(i == j) m_adjacencia[i][j] = 1;
-        else m_adjacencia[i][j] = 0;
+        m_adjacencia[i][j] = 0;
       }
 
     }
-
   }
 
 }Grafo;
 
-int detectaCiclo_util(Grafo *G, int* visitados, int atual);
-int detectaCiclo(Grafo *G);
-void reinicia_grafo(Grafo *g);
+bool detectaCiclo_util(Grafo *G, int* visitados, int atual);
+bool detectaCiclo(Grafo *G);

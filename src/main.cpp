@@ -62,24 +62,26 @@ std::vector<struct Escalonamento> encontra_escalonamento(std::vector<struct Oper
 
 }
 
-void print_grafo(Grafo *g){
-    for(int i = 0; i < g->n_vertices; i++){
-        for(int j = 0; j < g->n_vertices; j++){
-            cout << g->m_adjacencia[i][j] << " ";
-        }
-        cout << "\n";
+int find_index(vector<int> v, int elm){
+    for(int i = 0; i < v.size(); i++){
+        if(v[i] == elm) return i;
     }
 }
 
-int teste_seriabilidade(struct Escalonamento *e, Grafo *g) {
+int teste_seriabilidade(struct Escalonamento *e) {
 
-    // operações auxiliares i e j
+    Grafo *g = new Grafo(e->id_transacoes.size());
     struct Operacao op_i, op_j;
 
-    // Cria as arestas no grafo
+    vector<int> sorted_ids(e->id_transacoes);
+    sort(sorted_ids.begin(), sorted_ids.end());
 
-    for(struct Operacao op_i: e->operacoes){
-        for(struct Operacao op_j: e->operacoes){
+    //procura por operações que tenham conflito
+    for(int i = 0; i < e->operacoes.size(); i++){
+        op_i = e->operacoes[i];
+
+        for(int j = i + 1; j < e->operacoes.size(); j++){
+            op_j = e->operacoes[j];
 
             // caso no qual transações diferentes acessam o mesmo atributo
             bool conflito_transacao = (op_j.id != op_i.id) && (op_j.atributo == op_i.atributo) && (op_j.op != 'C' && op_i.op != 'C');
@@ -90,14 +92,17 @@ int teste_seriabilidade(struct Escalonamento *e, Grafo *g) {
                 // Read antes de um Write
                 // e Write antes de um Write.
                 bool cria_aresta = (op_j.op != op_i.op) || (op_j.op == 'W' && op_i.op == 'W');
+                if(cria_aresta){
 
-                // cria uma aresta entre i e j na matriz adjacente
-                if(cria_aresta) g->m_adjacencia[op_i.id - 1][op_j.id - 1] = 1;
+                    //criamos uma aresta no grafo
+                    int index_grafo_i = find_index(sorted_ids, op_i.id);
+                    int index_grafo_j = find_index(sorted_ids, op_j.id);
+                    g->m_adjacencia[index_grafo_i][index_grafo_j] = 1;
+                }
             }
         }
     }
-    // verifica se o grafo é cíclico.
-
+    // checamos se ele é ciclico
     return !detectaCiclo(g);
 }
 
@@ -113,10 +118,6 @@ bool compara_operacao(struct Operacao op1, struct Operacao op2){
     igual &= op1.op == op2.op;
     igual &= op1.atributo == op2.atributo;
     return igual;
-}
-
-void print(struct Operacao op){
-    cout << op.pos << " T"<< op.id << " " << op.op << " "<<op.atributo <<"\n";
 }
 
 bool verifica_visao(std::vector<struct Operacao> v1, std::vector<struct Operacao> v2){
@@ -135,11 +136,14 @@ bool verifica_visao(std::vector<struct Operacao> v1, std::vector<struct Operacao
     reverse(inverse_v2.begin(), inverse_v2.end());
 
     // para cada operação na primeira visão
-
     for(int i = v1.size() - 1; i >= 0; i--){
         opi = v1[i];
+
+        // procuramos um READ
         if(opi.op == 'R'){
             ultima_escrita = opi;
+
+            // buscamos saber se existe um WRITE antes dele
             for(int j = i - 1; j >= 0; j--){
                 opj = v1[j];
 
@@ -147,10 +151,15 @@ bool verifica_visao(std::vector<struct Operacao> v1, std::vector<struct Operacao
                 if(escrita_anterior) ultima_escrita = opj;
             }
 
+            // procuramos o mesmo READ na segunda visão
             for(int k = v2.size() - 1; k >= 0; k--){
                 opk = v2[k];
+
+                // achamos-o
                 if(compara_operacao(opi, opk)){
                     ultima_escrita_v2 = opk;
+
+                    // procuramos o mesmo WRITE na segunda visão
                     for(int j = k - 1; j >= 0; j--){
                         opj = v2[j];
                         escrita_anterior = opj.id != opk.id && opk.atributo == opj.atributo && opj.op == 'W';
@@ -160,10 +169,14 @@ bool verifica_visao(std::vector<struct Operacao> v1, std::vector<struct Operacao
                 }
             }
 
+            // WRITES diferentes -> retornamos false
             if(!compara_operacao(ultima_escrita, ultima_escrita_v2)) return false;
         }
     }
-    // guarda os atributos já vistos
+
+    // se a função chegou até aqui, primeiro critério foi satisfeito
+
+
     vector<char> visitados;
 
     // iteramos sobre todas as operações da visão 1 na ordem invertida (final->começo)
@@ -248,6 +261,7 @@ int main() {
 
 
 //começo de debbuger
+/*
 printf("------------------------------------------------------------\n");
     printf("estrutura de dados:\n");
     printf("ListaEscalonamentos(tamanho = %d):\n", (int)escalonamentos.size());
@@ -264,27 +278,15 @@ printf("------------------------------------------------------------\n");
     }
 printf("------------------------------------------------------------\n");
 //fim do debugger
-
-
-    // monta o grafo global
-    int tamanho_problema = 0;
-    for (struct Escalonamento esc: escalonamentos){
-        tamanho_problema += esc.id_transacoes.size();
-    }
-    Grafo *g = new Grafo(tamanho_problema);
+*/
 
     for (int k=0; k < escalonamentos.size(); k++) {
-//        teste_seriabilidade(&e.esc[i]);
-        //cout << teste_seriabilidade(&esc, g);
-        //int i = teste_seriabilidade(&esc, g);
-        teste_equivalencia_visao(&escalonamentos[k]);
-        //teste_seriabilidade(&escalonamentos[k], g);
 
         printf("%d %d", k+1, escalonamentos[k].id_transacoes[0]);
         for (int i=1; i<escalonamentos[k].id_transacoes.size(); i++)
             printf(",%d", escalonamentos[k].id_transacoes[i]);
 
-        if (teste_seriabilidade(&escalonamentos[k], g))
+        if (teste_seriabilidade(&escalonamentos[k]))
             printf(" SS");
         else
             printf(" NS");
@@ -295,11 +297,5 @@ printf("------------------------------------------------------------\n");
             printf(" NV");
 
         printf("\n");
-
-        printf("%d %d\n", teste_equivalencia_visao(&escalonamentos[k]), teste_seriabilidade(&escalonamentos[k], g));
-        cout << "\n";
-        print_grafo(g);
-        cout << "\n";
-        reinicia_grafo(g);
     }
 }
